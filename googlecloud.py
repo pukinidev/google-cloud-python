@@ -8,8 +8,8 @@ firewall_client = compute_v1.FirewallsClient()
 request = compute_v1.AggregatedListInstancesRequest()
 
 # Get IP(Internal and External) from Virtual Machines
-def get_ips_instances(request, instace_client):
-    request.project = 'isis2503-monitoria'
+def get_ips_instances(project_id, request, instace_client):
+    request.project = project_id
     agg_list = instace_client.aggregated_list(request=request)
     instances_found = agg_list.get("zones/us-central1-a").instances
     instances = {}
@@ -22,49 +22,48 @@ def get_ips_instances(request, instace_client):
     return instances
 
 # Start All Virtual Machines
-def start_vm(request, instace_client):
-    request.project = 'isis2503-monitoria'
+def start_vm(project_id, request, instace_client):
+    request.project = project_id
     for instance in instace_client.aggregated_list(request=request).get("zones/us-central1-a").instances:
-        instace_client.start(project='isis2503-monitoria',
+        instace_client.start(project=project_id,
                              zone='us-central1-a', instance=instance.name)
 
 # Start Virtual Machine by Name
-def start_vm_by_name(request, instace_client, name):
-    request.project = 'isis2503-monitoria'
-    instace_client.start(project='isis2503-monitoria',
+def start_vm_by_name(project_id,request, instace_client, name):
+    request.project = project_id
+    instace_client.start(project=project_id,
                          zone='us-central1-a', instance=name)
 
 # Stops All Virtual Machines
-def stop_vm(request, instace_client):
-    request.project = 'isis2503-monitoria'
+def stop_vm(project_id,request, instace_client):
+    request.project = project_id
     for instance in instace_client.aggregated_list(request=request).get("zones/us-central1-a").instances:
-        instace_client.stop(project='isis2503-monitoria',
+        instace_client.stop(project=project_id,
                             zone='us-central1-a', instance=instance.name)
 
 # Stops Virtual Machine by Name
-def stop_vm_by_name(request, instace_client, name):
-    request.project = 'isis2503-monitoria'
-    instace_client.stop(project='isis2503-monitoria',
+def stop_vm_by_name(project_id, request, instace_client, name):
+    request.project = project_id
+    instace_client.stop(project=project_id,
                         zone='us-central1-a', instance=name)
 
 # Get All Virtual Machines (Information)
-def get_all_instances(request, instace_client):
-    request.project = 'isis2503-monitoria'
+def get_all_instances(project_id,request, instace_client):
+    request.project = project_id
     agg_list = instace_client.aggregated_list(request=request)
     all_instances = defaultdict(list)
     for zone, response in agg_list:
         if response.instances:
             all_instances[zone].extend(response.instances)
-            print(f" {zone}:")
             for instance in response.instances:
                 return instance
 
 # Create a VM
-def create_vm(name, tag, instace_client):
+def create_vm(project_id, name, tag, instace_client):
 
     INSTANCE_NAME = name
-    MACHINE_TYPE = 'projects/isis2503-monitoria/zones/us-central1-a/machineTypes/e2-micro'
-    SUBNETWORK = 'projects/isis2503-monitoria/regions/us-central1/subnetworks/default'
+    MACHINE_TYPE = 'projects/'+ project_id + '/zones/us-central1-a/machineTypes/e2-micro'
+    SUBNETWORK = 'projects/'+ project_id + '/regions/us-central1/subnetworks/default'
     SOURCE_IMAGE = 'projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20230907'
 
     NETWORK_INTERFACE = {
@@ -88,7 +87,7 @@ def create_vm(name, tag, instace_client):
                 'initialize_params': {
                     'source_image': SOURCE_IMAGE,
                     'disk_size_gb': '10',
-                    'disk_type': "projects/isis2503-monitoria/zones/us-central1-a/diskTypes/pd-standard"
+                    'disk_type': 'projects/' + project_id + '/zones/us-central1-a/diskTypes/pd-standard',
                 },
                 "mode": "READ_WRITE",
                 "type": "PERSISTENT",
@@ -107,7 +106,7 @@ def create_vm(name, tag, instace_client):
 
     print("Creating instace.....")
     operation = instace_client.insert(
-        project='isis2503-monitoria',
+        project= project_id,
         zone='us-central1-a',
         instance_resource=config
     )
@@ -115,12 +114,12 @@ def create_vm(name, tag, instace_client):
     operation.result()
 
 # Create Firewall Rule
-def create_firewall_rule(name, destiny_tag, port, filter,firewall_client):
+def create_firewall_rule(project_id, name, destiny_tag, port, filter,firewall_client):
 
     config = {
         "name": name,
-        "self_link": "projects/isis2503-monitoria/global/firewalls",
-        "network": "projects/isis2503-monitoria/global/networks/default",
+        "self_link": 'projects/' + project_id + '/global/firewalls',
+        "network": 'projects/' + project_id + '/global/networks/default',
         "direction": "INGRESS",
         "priority": 1000,
         "target_tags": [
@@ -145,7 +144,7 @@ def create_firewall_rule(name, destiny_tag, port, filter,firewall_client):
             config["source_tags"] = [source_tag]
             
     operation = firewall_client.insert(
-        project='isis2503-monitoria',
+        project=project_id,
         firewall_resource=config
     )
 
