@@ -5,6 +5,7 @@ import os
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"
 instace_client = compute_v1.InstancesClient()
 firewall_client = compute_v1.FirewallsClient()
+health_client = compute_v1.HealthChecksClient()
 request = compute_v1.AggregatedListInstancesRequest()
 
 # Get IP(Internal and External) from Virtual Machines
@@ -62,6 +63,12 @@ def get_all_instances(request, instace_client):
 # Create a VM
 def create_vm(name, tag, instace_client):
 
+    """
+    :param name: Name of the VM
+    :param tag: Tag of the VM
+    :param instace_client: Instance Client
+    """
+
     INSTANCE_NAME = name
     MACHINE_TYPE = 'projects/isis2503-monitoria/zones/us-central1-a/machineTypes/e2-micro'
     SUBNETWORK = 'projects/isis2503-monitoria/regions/us-central1/subnetworks/default'
@@ -117,6 +124,15 @@ def create_vm(name, tag, instace_client):
 # Create Firewall Rule
 def create_firewall_rule(name, destiny_tag, port, filter,firewall_client):
 
+    """
+    :param name: Name of the firewall rule
+    :param destiny_tag: Tag of the VM that will receive the rule
+    :param port: Port that will be opened
+    :param filter: Type of filter (ranges or tags)
+    :param firewall_client: Firewall Client
+    
+    """
+
     config = {
         "name": name,
         "self_link": "projects/isis2503-monitoria/global/firewalls",
@@ -152,3 +168,35 @@ def create_firewall_rule(name, destiny_tag, port, filter,firewall_client):
     operation.result()
 
 
+# Create Health Check 
+def create_health_check(name, health_client):
+
+    config = {
+        "name": name,
+        "type_": "HTTP",
+        "check_interval_sec": 5,
+        "healthy_threshold": 2,
+        "unhealthy_threshold": 2,
+        "timeout_sec": 5,
+        "http_health_check":{
+            "host": "",
+            "port": 80,
+            "proxy_header": "NONE",
+            "request_path": "/",
+            "response": "",
+        }
+    }
+    
+    operation = health_client.insert(
+        project='isis2503-monitoria',
+        health_check_resource=config
+    )
+
+    operation.result()
+
+# Create group instances
+
+def create_group_instances():
+    pass
+
+# Create Load Balancer
