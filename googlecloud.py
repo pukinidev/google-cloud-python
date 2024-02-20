@@ -1,4 +1,5 @@
 from google.cloud import compute_v1
+from google.cloud import resourcemanager_v3
 from collections import defaultdict
 import os
 
@@ -8,9 +9,25 @@ firewall_client = compute_v1.FirewallsClient()
 health_client = compute_v1.HealthChecksClient()
 request = compute_v1.AggregatedListInstancesRequest()
 
+PROYECT = 'isis2503-monitoria'
+
+def get_project(project_id):
+    client = resourcemanager_v3.ProjectsClient()
+
+    request = resourcemanager_v3.GetProjectRequest(
+        name=f'projects/{project_id}',
+    )
+    response = client.get_project(request=request)
+        
+    if response.project_id == project_id:
+        return response.project_id
+    else:
+        return "Project ID not found!"
+
+
 # Get IP(Internal and External) from Virtual Machines
 def get_ips_instances(request, instace_client):
-    request.project = 'isis2503-monitoria'
+    request.project = PROYECT
     agg_list = instace_client.aggregated_list(request=request)
     instances_found = agg_list.get("zones/us-central1-a").instances
     instances = {}
@@ -24,33 +41,33 @@ def get_ips_instances(request, instace_client):
 
 # Start All Virtual Machines
 def start_vm(request, instace_client):
-    request.project = 'isis2503-monitoria'
+    request.project = PROYECT
     for instance in instace_client.aggregated_list(request=request).get("zones/us-central1-a").instances:
-        instace_client.start(project='isis2503-monitoria',
+        instace_client.start(project=PROYECT,
                              zone='us-central1-a', instance=instance.name)
 
 # Start Virtual Machine by Name
 def start_vm_by_name(request, instace_client, name):
-    request.project = 'isis2503-monitoria'
-    instace_client.start(project='isis2503-monitoria',
+    request.project = PROYECT
+    instace_client.start(project=PROYECT,
                          zone='us-central1-a', instance=name)
 
 # Stops All Virtual Machines
 def stop_vm(request, instace_client):
-    request.project = 'isis2503-monitoria'
+    request.project = PROYECT
     for instance in instace_client.aggregated_list(request=request).get("zones/us-central1-a").instances:
-        instace_client.stop(project='isis2503-monitoria',
+        instace_client.stop(project=PROYECT,
                             zone='us-central1-a', instance=instance.name)
 
 # Stops Virtual Machine by Name
 def stop_vm_by_name(request, instace_client, name):
-    request.project = 'isis2503-monitoria'
-    instace_client.stop(project='isis2503-monitoria',
+    request.project = PROYECT
+    instace_client.stop(project=PROYECT,
                         zone='us-central1-a', instance=name)
 
 # Get All Virtual Machines (Information)
 def get_all_instances(request, instace_client):
-    request.project = 'isis2503-monitoria'
+    request.project = PROYECT
     agg_list = instace_client.aggregated_list(request=request)
     all_instances = defaultdict(list)
     for zone, response in agg_list:
@@ -114,7 +131,7 @@ def create_vm(name, tag, instace_client):
 
     print("Creating instace.....")
     operation = instace_client.insert(
-        project='isis2503-monitoria',
+        project=PROYECT,
         zone='us-central1-a',
         instance_resource=config
     )
@@ -161,7 +178,7 @@ def create_firewall_rule(name, destiny_tag, port, filter,firewall_client):
             config["source_tags"] = [source_tag]
             
     operation = firewall_client.insert(
-        project='isis2503-monitoria',
+        project=PROYECT,
         firewall_resource=config
     )
 
